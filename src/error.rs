@@ -11,29 +11,37 @@ use thiserror::Error;
 
 /// Errors that may be returned by the Template program.
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
-pub enum ProgramTemplateError {
-    /// Example error
-    #[error("Example error")]
-    ExampleError,
+pub enum HeapProgramError {
+    /// Wrong node account sent
+    #[error("Wrong node account sent")]
+    WrongNodeAccount,
+    /// Wrong authority was sent
+    #[error("Wrong authority was sent")]
+    WrongAuthority,
+    /// Node data can't be empty
+    #[error("Node data can't be empty")]
+    InvalidNodesData,
 }
-impl From<ProgramTemplateError> for ProgramError {
-    fn from(e: ProgramTemplateError) -> Self {
+impl From<HeapProgramError> for ProgramError {
+    fn from(e: HeapProgramError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
-impl<T> DecodeError<T> for ProgramTemplateError {
+impl<T> DecodeError<T> for HeapProgramError {
     fn type_of() -> &'static str {
-        "ProgramTemplateError"
+        "HeapProgramError"
     }
 }
 
-impl PrintProgramError for ProgramTemplateError {
+impl PrintProgramError for HeapProgramError {
     fn print<E>(&self)
     where
         E: 'static + std::error::Error + DecodeError<E> + PrintProgramError + FromPrimitive,
     {
         match self {
-            ProgramTemplateError::ExampleError => msg!("Example error message"),
+            HeapProgramError::WrongNodeAccount => msg!("Wrong node account sent"),
+            HeapProgramError::WrongAuthority => msg!("Wrong authority was sent"),
+            HeapProgramError::InvalidNodesData => msg!("Node data can't be empty"),
         }
     }
 }
