@@ -7,6 +7,8 @@ use solana_program::pubkey::Pubkey;
 pub const HEAP_VERSION: u8 = 1;
 /// Empty Node's data
 pub const EMPTY_NODE_DATA: [u8; 32] = [0; 32];
+/// Root node index
+pub const ROOT_NODE_INDEX: u8 = 0;
 
 /// Heap
 #[repr(C)]
@@ -22,7 +24,7 @@ pub struct Heap {
 
 /// Node
 #[repr(C)]
-#[derive(Debug, Default, PartialEq, BorshDeserialize, BorshSerialize)]
+#[derive(Debug, Default, PartialEq, Clone, BorshDeserialize, BorshSerialize)]
 pub struct Node {
     /// Version
     pub version: u8,

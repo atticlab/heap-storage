@@ -21,6 +21,15 @@ pub enum HeapProgramError {
     /// Node data can't be empty
     #[error("Node data can't be empty")]
     InvalidNodesData,
+    /// Node indexes are out of range
+    #[error("Node indexes are out of range")]
+    NodeIndexesOutOfRange,
+    /// Calculation error
+    #[error("Calculation error")]
+    CalculationError,
+    /// Node are not related to each others
+    #[error("Node are not related to each others")]
+    NodesAreNotRelated,
 }
 impl From<HeapProgramError> for ProgramError {
     fn from(e: HeapProgramError) -> Self {
@@ -42,6 +51,9 @@ impl PrintProgramError for HeapProgramError {
             HeapProgramError::WrongNodeAccount => msg!("Wrong node account sent"),
             HeapProgramError::WrongAuthority => msg!("Wrong authority was sent"),
             HeapProgramError::InvalidNodesData => msg!("Node data can't be empty"),
+            HeapProgramError::NodeIndexesOutOfRange => msg!("Node indexes are out of range"),
+            HeapProgramError::CalculationError => msg!("Calculation error"),
+            HeapProgramError::NodesAreNotRelated => msg!("Node are not related to each others"),
         }
     }
 }
