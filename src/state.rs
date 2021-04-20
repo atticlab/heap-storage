@@ -35,6 +35,9 @@ pub struct Node {
 }
 
 impl Heap {
+    /// LEN
+    pub const LEN: usize = 49;
+
     /// Check if Heap is initialized
     pub fn is_initialized(&self) -> bool {
         self.version == HEAP_VERSION
@@ -42,6 +45,9 @@ impl Heap {
 }
 
 impl Node {
+    /// LEN
+    pub const LEN: usize = 49;
+
     /// Check if Node is initialized
     pub fn is_initialized(&self) -> bool {
         // use the same version as for Heap because Node is belongs to certain Heap

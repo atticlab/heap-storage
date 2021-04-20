@@ -14,6 +14,8 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
+    program::invoke_signed,
+    system_instruction,
 };
 use std::mem;
 
@@ -234,6 +236,46 @@ impl Processor {
         child_node.serialize(&mut *child_node_account_info.data.borrow_mut()).map_err(|e| e.into())
     }
 
+    /// Create new Node account
+    pub fn process_create_node_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+        let account_info_iter = &mut accounts.iter();
+        let payer_account_info = next_account_info(account_info_iter)?;
+        let heap_account_info = next_account_info(account_info_iter)?;
+        let account_to_create_account_info = next_account_info(account_info_iter)?;
+        let rent_account_info = next_account_info(account_info_iter)?;
+        let rent = &Rent::from_account_info(rent_account_info)?;
+        // Need in System Program account because we call create_account_with_seed instruction which requires it
+        let _system_program = next_account_info(account_info_iter)?;
+
+        // TODO: write unit test and check what will happens if we try to create already created account
+        // TODO: check if account already created or not
+
+        let heap = Heap::try_from_slice(&heap_account_info.data.borrow())?;
+        if !heap.is_initialized() {
+            return Err(ProgramError::UninitializedAccount);
+        }
+
+        let (generated_address, bump_seed) =
+            Pubkey::find_program_address(&[&heap_account_info.key.to_bytes()[..32]], program_id);
+        if generated_address != *account_to_create_account_info.key {
+            return Err(ProgramError::InvalidSeeds);
+        }
+
+        let signature = &[&heap_account_info.key.to_bytes()[..32], &[bump_seed]];
+
+        invoke_signed(
+            &system_instruction::create_account(
+                payer_account_info.key,
+                account_to_create_account_info.key,
+                rent.minimum_balance(Node::LEN),
+                Node::LEN as u64,
+                program_id,
+            ),
+            &[payer_account_info.clone(), account_to_create_account_info.clone()],
+            &[signature],
+        )
+    }
+
     /// Processes an instruction
     pub fn process_instruction(
         program_id: &Pubkey,
@@ -257,6 +299,10 @@ impl Processor {
             HeapInstruction::Swap => {
                 msg!("Instruction: Swap");
                 Self::process_swap(program_id, accounts)
+            }
+            HeapInstruction::CreateNodeAccount => {
+                msg!("Instruction: CreateNodeAccount");
+                Self::process_create_node_account(program_id, accounts)
             }
         }
     }

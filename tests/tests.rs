@@ -10,14 +10,14 @@ use solana_sdk::{
 
 pub fn program_test() -> ProgramTest {
     ProgramTest::new(
-        "solana-program-template",
+        "heap-program",
         id(),
         processor!(processor::Processor::process_instruction),
     )
 }
 
 #[tokio::test]
-async fn test_call_example_instruction() {
+async fn test_init_heap() {
     let (mut banks_client, payer, recent_blockhash) = program_test().start().await;
 
     let new_acc = Keypair::new();
