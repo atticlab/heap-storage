@@ -148,7 +148,10 @@ impl Processor {
             return Err(ProgramError::UninitializedAccount);
         }
 
-        let leaf_index = heap.size.checked_sub(1).ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+        let leaf_index = heap
+            .size
+            .checked_sub(1)
+            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
         let (generated_leaf_node_address, _) = Pubkey::find_program_address(
             &[
                 &heap_account_info.key.to_bytes()[..32],
@@ -253,9 +256,6 @@ impl Processor {
         let rent = &Rent::from_account_info(rent_account_info)?;
         // Need in System Program account because we call create_account_with_seed instruction which requires it
         let _system_program = next_account_info(account_info_iter)?;
-
-        // TODO: write unit test and check what will happens if we try to create already created account
-        // TODO: check if account already created or not
 
         let heap = Heap::try_from_slice(&heap_account_info.data.borrow())?;
         if !heap.is_initialized() {
