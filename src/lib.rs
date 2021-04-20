@@ -16,5 +16,4 @@ pub mod entrypoint;
 // Export current sdk types for downstream users building with a different sdk version
 pub use solana_program;
 
-// FIXME: change this address before run tests/program
-solana_program::declare_id!("11111111111111111111111111111111");
+solana_program::declare_id!("3v6FfdWMT2bcoQQ9hN4F2syu7qhRHzNuCPPQqV12hsw2");

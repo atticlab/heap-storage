@@ -79,13 +79,13 @@ impl Processor {
         }
         // check if Node address was generated correct ( should be ProgramAcc(HeapAcc, size parameter from Heap) )
         // also it checks that it's the last element
-        let generated_node_address = Pubkey::create_program_address(
+        let (generated_node_address, _) = Pubkey::find_program_address(
             &[
                 &heap_account_info.key.to_bytes()[..32],
                 &heap.size.to_le_bytes(),
             ],
             program_id,
-        )?;
+        );
         if generated_node_address != *node_account_info.key {
             return Err(HeapProgramError::WrongNodeAccount.into());
         }
@@ -135,13 +135,13 @@ impl Processor {
         }
         // generate node's address and check that it's the same as in arguments
         // address will be generated with index 0
-        let generated_root_node_address = Pubkey::create_program_address(
+        let (generated_root_node_address, _) = Pubkey::find_program_address(
             &[
                 &heap_account_info.key.to_bytes()[..32],
                 &(ROOT_NODE_INDEX as u128).to_le_bytes(),
             ],
             program_id,
-        )?;
+        );
         if generated_root_node_address != *root_node_account_info.key {
             return Err(HeapProgramError::WrongNodeAccount.into());
         }
@@ -256,12 +256,12 @@ impl Processor {
         }
 
         let (generated_address, bump_seed) =
-            Pubkey::find_program_address(&[&heap_account_info.key.to_bytes()[..32]], program_id);
+            Pubkey::find_program_address(&[&heap_account_info.key.to_bytes()[..32], &heap.size.to_le_bytes()], program_id);
         if generated_address != *account_to_create_account_info.key {
             return Err(ProgramError::InvalidSeeds);
         }
 
-        let signature = &[&heap_account_info.key.to_bytes()[..32], &[bump_seed]];
+        let signature = &[&heap_account_info.key.to_bytes()[..32], &heap.size.to_le_bytes(), &[bump_seed]];
 
         invoke_signed(
             &system_instruction::create_account(
