@@ -113,6 +113,33 @@ pub async fn add_node(
         .await
 }
 
+pub async fn remove_node(
+    program_context: &mut ProgramTestContext,
+    heap_account: &Pubkey,
+    node_account: &Pubkey,
+    leaf_account: &Pubkey,
+    authority_account: &Keypair,
+) -> Result<(), TransportError> {
+    let mut transaction = Transaction::new_with_payer(
+        &[instruction::remove_node(
+            &id(),
+            heap_account,
+            node_account,
+            leaf_account,
+            &authority_account.pubkey(),
+        ).unwrap()],
+        Some(&program_context.payer.pubkey()));
+    
+    transaction.sign(
+        &[&program_context.payer, authority_account],
+        program_context.last_blockhash,
+    );
+    program_context
+        .banks_client
+        .process_transaction(transaction)
+        .await
+}
+
 #[tokio::test]
 async fn test_init_heap() {
     let mut program_context = program_test().start_with_context().await;
@@ -203,4 +230,59 @@ async fn test_add_node() {
     assert_eq!(node.data, node_data);
     assert_eq!(heap.size, heap_size_before + 1);
     assert_eq!(node.index, heap_size_before);
+}
+
+#[tokio::test]
+async fn test_remove_node() {
+    let mut program_context = program_test().start_with_context().await;
+
+    let heap_authority = Keypair::new();
+
+    let heap_key: Keypair = init_heap(&mut program_context, &heap_authority)
+        .await
+        .unwrap();
+
+    let heap_account_data = get_account(&mut program_context, &heap_key.pubkey()).await;
+    let heap = state::Heap::try_from_slice(&heap_account_data.data.as_slice()).unwrap();
+
+    let (node_key, _) = Pubkey::find_program_address(
+        &[
+            &heap_key.pubkey().to_bytes()[..32],
+            &heap.size.to_le_bytes(),
+        ],
+        &id(),
+    );
+
+    create_node_account(&mut program_context, &heap_key.pubkey(), &node_key)
+        .await
+        .unwrap();
+
+    let node_data = [1; 32];
+
+    add_node(
+        &mut program_context,
+        &heap_key.pubkey(),
+        &node_key,
+        &heap_authority,
+        node_data,
+    )
+    .await
+    .unwrap();
+
+    let heap_account_data = get_account(&mut program_context, &heap_key.pubkey()).await;
+    let heap = state::Heap::try_from_slice(&heap_account_data.data.as_slice()).unwrap();
+
+    let heap_size_before = heap.size;
+
+    remove_node(&mut program_context, &heap_key.pubkey(), &node_key, &node_key, &heap_authority).await.unwrap();
+
+    let heap_account_data = get_account(&mut program_context, &heap_key.pubkey()).await;
+    let heap = state::Heap::try_from_slice(&heap_account_data.data.as_slice()).unwrap();
+
+    assert_eq!(heap.size, heap_size_before-1);
+
+    let node_account_data = get_account(&mut program_context, &node_key).await;
+    let node = state::Node::try_from_slice(&node_account_data.data.as_slice()).unwrap();
+
+    assert_eq!(node.is_initialized(), false);
 }
