@@ -11,11 +11,11 @@ use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
     msg,
+    program::invoke_signed,
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvar::{rent::Rent, Sysvar},
-    program::invoke_signed,
     system_instruction,
+    sysvar::{rent::Rent, Sysvar},
 };
 use std::mem;
 
@@ -109,7 +109,10 @@ impl Processor {
         // write data to Node
         node.data = data;
 
-        heap.size = heap.size.checked_add(1).ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+        heap.size = heap
+            .size
+            .checked_add(1)
+            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
 
         node.serialize(&mut *node_account_info.data.borrow_mut())?;
         heap.serialize(&mut *heap_account_info.data.borrow_mut())
@@ -176,7 +179,10 @@ impl Processor {
         leaf_node.index = 0;
         leaf_node.data = EMPTY_NODE_DATA;
         // decrease size in heap account
-        heap.size = heap.size.checked_sub(1).ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+        heap.size = heap
+            .size
+            .checked_sub(1)
+            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
 
         root_node.serialize(&mut *root_node_account_info.data.borrow_mut())?;
         leaf_node.serialize(&mut *leaf_node_account_info.data.borrow_mut())?;
@@ -233,11 +239,16 @@ impl Processor {
         mem::swap(&mut parent_node.data, &mut child_node.data);
 
         parent_node.serialize(&mut *parent_node_account_info.data.borrow_mut())?;
-        child_node.serialize(&mut *child_node_account_info.data.borrow_mut()).map_err(|e| e.into())
+        child_node
+            .serialize(&mut *child_node_account_info.data.borrow_mut())
+            .map_err(|e| e.into())
     }
 
     /// Create new Node account
-    pub fn process_create_node_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+    pub fn process_create_node_account(
+        program_id: &Pubkey,
+        accounts: &[AccountInfo],
+    ) -> ProgramResult {
         let account_info_iter = &mut accounts.iter();
         let payer_account_info = next_account_info(account_info_iter)?;
         let heap_account_info = next_account_info(account_info_iter)?;
@@ -255,13 +266,22 @@ impl Processor {
             return Err(ProgramError::UninitializedAccount);
         }
 
-        let (generated_address, bump_seed) =
-            Pubkey::find_program_address(&[&heap_account_info.key.to_bytes()[..32], &heap.size.to_le_bytes()], program_id);
+        let (generated_address, bump_seed) = Pubkey::find_program_address(
+            &[
+                &heap_account_info.key.to_bytes()[..32],
+                &heap.size.to_le_bytes(),
+            ],
+            program_id,
+        );
         if generated_address != *account_to_create_account_info.key {
             return Err(ProgramError::InvalidSeeds);
         }
 
-        let signature = &[&heap_account_info.key.to_bytes()[..32], &heap.size.to_le_bytes(), &[bump_seed]];
+        let signature = &[
+            &heap_account_info.key.to_bytes()[..32],
+            &heap.size.to_le_bytes(),
+            &[bump_seed],
+        ];
 
         invoke_signed(
             &system_instruction::create_account(
@@ -271,7 +291,10 @@ impl Processor {
                 Node::LEN as u64,
                 program_id,
             ),
-            &[payer_account_info.clone(), account_to_create_account_info.clone()],
+            &[
+                payer_account_info.clone(),
+                account_to_create_account_info.clone(),
+            ],
             &[signature],
         )
     }

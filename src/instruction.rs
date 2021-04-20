@@ -5,8 +5,7 @@ use solana_program::{
     instruction::{AccountMeta, Instruction},
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvar,
-    system_program,
+    system_program, sysvar,
 };
 
 /// Instruction definition
@@ -43,7 +42,7 @@ pub enum HeapInstruction {
     Swap,
 
     /// Create Node account
-    /// 
+    ///
     ///   0. `[sw]` Payer
     ///   1. `[r]` Heap
     ///   2. `[w]` Account to create
