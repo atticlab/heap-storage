@@ -386,6 +386,21 @@ async fn test_swap_nodes() {
     assert_eq!(first_node.data, [2; 32]);
     assert_eq!(second_node.data, [1; 32]);
 
+    swap_nodes(
+        &mut program_context,
+        &heap_key.pubkey(),
+        &nodes[0],
+        &nodes[2],
+        &heap_authority,
+    )
+    .await
+    .unwrap();
+
+    let third_node_in_place_of_first = get_account(&mut program_context, &nodes[0]).await;
+    let third_node_in_place_of_first =
+        state::Node::try_from_slice(&third_node_in_place_of_first.data.as_slice()).unwrap();
+    assert_eq!(third_node_in_place_of_first.data, [3; 32]);
+
     // try to swap not parent-child nodes
     let transaction_error = swap_nodes(
         &mut program_context,

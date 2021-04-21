@@ -1,4 +1,4 @@
-This is minimal template for Solana BPF programs
+Heap on Solana.
 
 ### Build and test for program compiled natively
 ```
