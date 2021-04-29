@@ -1,29 +1,31 @@
-[Heap](https://www.cs.usfca.edu/~galles/visualization/Heap.html) on Solana.
+# Heap Storage
+Heap is a tree-like data structure for storing large ordered sets of data. You can think of a heap as a binary tree with comparable nodes and each node having up to two child nodes. For the ordered heap each parent node should be either larger (max-heap) or smaller (min-heap) than the child node.
 
-# Heap
+This program is an abstract heap implementation, it stores arbitrary 32-byte values which can be interpreted by the entity using this contract. New nodes can be added only to the end of the heap and removed only from the top of the heap. It is also possible to swap adjacent parent-child nodes.
 
-Such as Solana stores all the data in accounts we can use different data structures on blockchain itself. Here is implementation of heap on blockchain.
+The typical usage of this data structure is to add elements to the heap (like lending obligations for example) and if the node needs to be removed (obligation to be liquidated) it has to be swapped to the top first (too see if there are less healthy obligations to be liquidated before).
 
-A heap is a useful data structure when it is necessary to repeatedly remove the object with the highest (or lowest) priority.
-Here we need to assign index to every node(which is account). We can do it by creating program accounts generated from the seed with index.
-In such case we achieve security such as heap elements don't have any private keys and we can easily generate offline all the element's keys by knowing size of the heap.
-Every node can store data up to 32 bytes.
+## Accounts
+This program manages two account types: Heap and Node. Heap is a single account storing data about the heap like its size and authority which can modify the heap. And Node account stores each particular node of the heap.
 
-Here is operations available in current program:
-- Init heap
-- Add node
-- Remove root node
-- Swap node's data
+## Instructions
 
-![Heap of blockchain diagram](./resources/diagram.png)
+### Init heap
+Initializes new heap account.
 
-### Build and test for program compiled natively
-```
-$ cargo build
-$ cargo test
-```
+### Add node
+Adds a new node to the end of the heap.
 
-### Build and test the program compiled for BPF
+### Remove root node
+Removes the root node from the heap and replace it with the last node. 
+
+### Swap node accounts
+Swaps parent-child accounts. It is the job of the caller to compare the nodes, this contract simply checks if the nodes are parent and child and swaps their data.
+Check out this [demonstration](https://www.cs.usfca.edu/~galles/visualization/Heap.html) of how such swaps work.
+
+![Account heap diagram](./resources/diagram.png)
+
+## Build and test
 ```
 $ cargo build-bpf
 $ cargo test-bpf
