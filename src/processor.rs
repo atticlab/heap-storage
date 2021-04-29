@@ -107,7 +107,7 @@ impl Processor {
         heap.size = heap
             .size
             .checked_add(1)
-            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+            .ok_or_else::<ProgramError, _>(|| HeapProgramError::CalculationError.into())?;
 
         node.serialize(&mut *node_account_info.data.borrow_mut())?;
         heap.serialize(&mut *heap_account_info.data.borrow_mut())
@@ -151,7 +151,7 @@ impl Processor {
         let leaf_index = heap
             .size
             .checked_sub(1)
-            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+            .ok_or_else::<ProgramError, _>(|| HeapProgramError::CalculationError.into())?;
         let (generated_leaf_node_address, _) = Pubkey::find_program_address(
             &[
                 &heap_account_info.key.to_bytes()[..32],
@@ -184,7 +184,7 @@ impl Processor {
         heap.size = heap
             .size
             .checked_sub(1)
-            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+            .ok_or_else::<ProgramError, _>(|| HeapProgramError::CalculationError.into())?;
 
         heap.serialize(&mut *heap_account_info.data.borrow_mut())
             .map_err(|e| e.into())
@@ -220,9 +220,9 @@ impl Processor {
         let parent_index = child_node
             .index
             .checked_sub(1)
-            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?
+            .ok_or_else::<ProgramError, _>(|| HeapProgramError::CalculationError.into())?
             .checked_div(2)
-            .ok_or::<ProgramError>(HeapProgramError::CalculationError.into())?;
+            .ok_or_else::<ProgramError, _>(|| HeapProgramError::CalculationError.into())?;
         if parent_index != parent_node.index {
             return Err(HeapProgramError::NodesAreNotRelated.into());
         }
